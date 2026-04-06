@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VISUAL SORTING HUB - Animasi & Fitur Lengkap</title>
+    <style>
+      :root {
+        --bg-color: #0f172a;
+        --panel-bg: rgba(30, 41, 59, 0.9);
+        --text-color: #f8fafc;
+        --primary: #3b82f6;
+        --primary-hover: #2563eb;
+        --bar-default: #0ea5e9;
+        --bar-compare: #f97316; /* Glowing orange */
+        --bar-swap: #ef4444; /* Glowing red */
+        --bar-sorted: #10b981; /* Glowing green */
+        --bar-pivot: #a855f7; /* Purple for pivot */
+        --panel-shadow:
+          0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        --font-main: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      body {
+        font-family: var(--font-main);
+        background-color: var(--bg-color);
+        background-image:
+          radial-gradient(
+            at 10% 10%,
+            rgba(59, 130, 246, 0.15) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 90% 90%,
+            rgba(16, 185, 129, 0.08) 0px,
+            transparent 50%
+          );
+        color: var(--text-color);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      h1 {
+        margin: 0 0 20px 0;
+        color: #f8fafc;
+        font-weight: 800;
+        font-size: 2.5rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+      }
+
+      h1 span {
+        color: var(--primary);
+      }
+
+      /* --- CONTROL PANEL --- */
+      .controls {
+        background-color: var(--panel-bg);
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: var(--panel-shadow);
+        margin-bottom: 25px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        width: 100%;
+        max-width: 1000px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      input[type="text"] {
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #475569;
+        background-color: rgba(15, 23, 42, 0.8);
+        color: white;
+        font-size: 0.9rem;
+        transition: border-color 0.2s;
+      }
+
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      }
+
+      .slider-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      input[type="range"] {
+        flex-grow: 1;
+        cursor: pointer;
+        accent-color: var(--primary);
+      }
+
+      .slider-val {
+        font-size: 0.9rem;
+        color: #f1f5f9;
+        width: 40px;
+        text-align: right;
+        font-family: monospace;
+      }
+
+      .btn-grid {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 20px;
+      }
+
+      button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      button:active {
+        transform: scale(0.98);
+      }
+
+      /* Warna Button */
+      .btn-set {
+        background-color: #475569;
+        color: white;
+      }
+      .btn-set:hover {
+        background-color: #64748b;
+      }
+
+      .btn-sort {
+        background-color: var(--primary);
+        color: white;
+      }
+      .btn-sort:hover {
+        background-color: var(--primary-hover);
+      }
+
+      .btn-reset {
+        background-color: #ef4444;
+        color: white;
+        margin-left: auto;
+      }
+      .btn-reset:hover {
+        background-color: #dc2626;
+      }
+
+      button:disabled {
+        background-color: #1e293b !important;
+        color: #64748b !important;
+        cursor: not-allowed;
+        box-shadow: none !important;
+        transform: none !important;
+      }
+
+      /* --- VISUALIZATION AREA --- */
+      .main-container {
+        display: flex;
+        gap: 25px;
+        width: 100%;
+        max-width: 1200px;
+        align-items: flex-start;
+      }
+
+      .visualization-box {
+        background-color: var(--panel-bg);
+        border-radius: 16px;
+        box-shadow: var(--panel-shadow);
+        padding: 30px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .status-header {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #f1f5f9;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 15px;
+      }
+
+      .visualization-area {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        height: 400px;
+        width: 100%;
+        gap: 4px;
+        overflow-x: auto;
+      }
+
+      .bar {
+        width: 40px;
+        background-color: var(--bar-default);
+        border-radius: 6px 6px 0 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 10px;
+        color: white;
+        font-weight: 800;
+        font-size: 1rem;
+        text-shadow: 1px 1px 1px black;
+        transition: all 0.2s ease-in-out;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        font-family: monospace;
+      }
+
+      /* --- LOG PANEL --- */
+      .log-panel {
+        background-color: rgba(0, 0, 0, 0.85);
+        width: 320px;
+        height: 520px;
+        overflow-y: auto;
+        border-radius: 16px;
+        padding: 20px;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 14px;
+        color: #10b981;
+        box-sizing: border-box;
+        box-shadow: var(--panel-shadow);
+        border: 1px solid rgba(16, 185, 129, 0.1);
+      }
+
+      .log-panel p {
+        margin: 6px 0;
+      }
+
+      /* Glowing Effect */
+      .bar.comparing {
+        background-color: var(--bar-compare);
+        box-shadow: 0 0 15px var(--bar-compare);
+        transform: scale(1.03);
+        z-index: 10;
+      }
+      .bar.swapping {
+        background-color: var(--bar-swap);
+        box-shadow: 0 0 15px var(--bar-swap);
+        transform: scale(1.05);
+        z-index: 11;
+      }
+      .bar.sorted {
+        background-color: var(--bar-sorted);
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+      }
+      .bar.pivot {
+        background-color: var(--bar-pivot);
+        box-shadow: 0 0 15px var(--bar-pivot);
+        transform: scale(1.03);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>D4 MANAJEMEN INFORMATIKA 2025D SHORTING</h1>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>Set Data Manual</label>
+        <input
+          type="text"
+          id="dataInput"
+          placeholder="Contoh: 12 4 8 2 10"
+          style="flex-grow: 1"
+        />
+        <button class="btn-set" onclick="setArrayFromInput()">Set Data</button>
+      </div>
+
+      <div class="control-group">
+        <label>Jumlah Data (Range)</label>
+        <div class="slider-container">
+          <input
+            type="range"
+            id="sizeSlider"
+            min="5"
+            max="50"
+            value="15"
+            oninput="updateSizeVal(this.value)"
+          />
+          <span class="slider-val" id="sizeVal">15</span>
+        </div>
+        <button class="btn-set" onclick="generateRandomArray()">
+          Generate Acak
+        </button>
+      </div>
+
+      <div class="control-group">
+        <label>Kecepatan Animasi (ms)</label>
+        <div class="slider-container">
+          <input
+            type="range"
+            id="speedSlider"
+            min="50"
+            max="1500"
+            value="500"
+            oninput="updateSpeedVal(this.value)"
+          />
+          <span class="slider-val" id="speedVal">500</span>
+        </div>
+      </div>
+
+      <div class="btn-grid">
+        <button class="btn-sort" onclick="startSort('bubble')">
+          Bubble Sort
+        </button>
+        <button class="btn-sort" onclick="startSort('selection')">
+          Selection Sort
+        </button>
+        <button class="btn-sort" onclick="startSort('insertion')">
+          Insertion Sort
+        </button>
+        <button class="btn-sort" onclick="startSort('quick')">
+          Quick Sort
+        </button>
+        <button class="btn-sort" onclick="startSort('merge')">
+          Merge Sort
+        </button>
+        <button class="btn-reset" onclick="resetVisualization()">Reset</button>
+      </div>
+    </div>
+
+    <div class="main-container">
+      <div class="visualization-box">
+        <div class="status-header" id="statusMsg">
+          Sistem siap. Masukkan data dan pilih metode sorting.
+        </div>
+        <div class="visualization-area" id="barsContainer"></div>
+      </div>
+
+      <div class="log-panel" id="logPanel">
+        <p>> Log sistem siap.</p>
+      </div>
+    </div>
+
+    <script>
+      let array = [];
+      let delay = 500; // Kecepatan animasi (ms)
+      let isSorting = false;
+      let originalArray = [];
+
+      const barsContainer = document.getElementById("barsContainer");
+      const logPanel = document.getElementById("logPanel");
+      const statusMsg = document.getElementById("statusMsg");
+
+      // Fungsi mencetak log ke panel bawah
+      function logMsg(msg, color = "#10b981") {
+        const p = document.createElement("p");
+        p.textContent = msg;
+        p.style.color = color;
+        logPanel.appendChild(p);
+        logPanel.scrollTop = logPanel.scrollHeight;
+      }
+
+      function setStatus(msg) {
+        statusMsg.textContent = msg;
+      }
+
+      // Update nilai slider
+      function updateSizeVal(val) {
+        document.getElementById("sizeVal").innerText = val;
+      }
+      function updateSpeedVal(val) {
+        delay = parseInt(val);
+        document.getElementById("speedVal").innerText = val;
+      }
+
+      // Mengambil input dari user
+      function setArrayFromInput() {
+        if (isSorting) return;
+        const input = document.getElementById("dataInput").value.trim();
+        if (!input) {
+          logMsg("> Error: Masukkan angka yang dipisahkan spasi!", "#ef4444");
+          return;
+        }
+        array = input.split(/\s+/).map(Number);
+        if (array.some(isNaN)) {
+          logMsg("> Error: Pastikan semua input berupa angka!", "#ef4444");
+          return;
+        }
+        originalArray = [...array];
+        renderBars();
+        logMsg(`> Data diset: [${array.join(", ")}]`);
+        setStatus("Data diset manual. Pilih metode sorting.");
+      }
+
+      // Membuat array acak
+      function generateRandomArray() {
+        if (isSorting) return;
+        const size = document.getElementById("sizeSlider").value;
+        array = [];
+        for (let i = 0; i < size; i++) {
+          // Generate angka acak 1 - 100
+          array.push(Math.floor(Math.random() * 99) + 1);
+        }
+        originalArray = [...array];
+        renderBars();
+        logMsg(`> Data acak ${size} diset.`);
+        setStatus("Data acak diset. Pilih metode sorting.");
+      }
+
+      // Menggambar balok animasi
+      function renderBars() {
+        barsContainer.innerHTML = "";
+        if (array.length === 0) return;
+        let maxVal = Math.max(...array);
+
+        array.forEach((val, idx) => {
+          const bar = document.createElement("div");
+          bar.classList.add("bar");
+          // Kalkulasi tinggi proporsional
+          const height = maxVal === 0 ? 0 : (val / maxVal) * 350;
+          bar.style.height = `${Math.max(height, 35)}px`; // Minimal 35px agar angka muat
+          bar.innerText = val;
+          bar.id = `bar-${idx}`;
+          barsContainer.appendChild(bar);
+        });
+      }
+
+      // Fungsi jeda untuk animasi
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      // Mengubah warna balok
+      function setBarColor(idx, state = "default") {
+        const bar = document.getElementById(`bar-${idx}`);
+        if (bar) {
+          bar.className = "bar"; // Reset
+          if (state !== "default") bar.classList.add(state);
+        }
+      }
+
+      // Menonaktifkan/mengaktifkan tombol selama animasi
+      function toggleButtons(disabled) {
+        isSorting = disabled;
+        const btns = document.querySelectorAll(
+          ".btn-sort, .btn-set, #speedSlider, #sizeSlider",
+        );
+        btns.forEach((btn) => (btn.disabled = disabled));
+      }
+
+      // Reset
+      function resetVisualization() {
+        if (isSorting) return;
+        if (originalArray.length > 0) {
+          array = [...originalArray];
+          renderBars();
+          logMsg("> Visualisasi direset.");
+          setStatus("Direset. Pilih metode sorting.");
+        }
+      }
+
+      // --- ALGORITMA SORTING & ANIMASI ---
+
+      // 1. Bubble Sort
+      async function bubbleSort() {
+        logMsg("\n--- Proses Bubble Sort ---", "#3b82f6");
+        let n = array.length;
+        for (let i = 0; i < n - 1; i++) {
+          for (let j = 0; j < n - i - 1; j++) {
+            setBarColor(j, "comparing");
+            setBarColor(j + 1, "comparing");
+            await sleep(delay);
+
+            if (array[j] > array[j + 1]) {
+              setBarColor(j, "swapping");
+              setBarColor(j + 1, "swapping");
+              await sleep(delay);
+
+              // Swap data
+              let temp = array[j];
+              array[j] = array[j + 1];
+              array[j + 1] = temp;
+              renderBars();
+
+              setBarColor(j, "swapping");
+              setBarColor(j + 1, "swapping");
+              await sleep(delay);
+            }
+            setBarColor(j, "default");
+            setBarColor(j + 1, "default");
+          }
+          logMsg(`Iterasi ${i + 1}: ${array.join(" ")}`);
+          setBarColor(n - i - 1, "sorted");
+        }
+        setBarColor(0, "sorted");
+        logMsg(`Data hasil sorting: ${array.join(" ")}`, "#10b981");
+        setStatus("Bubble Sort Selesai!");
+      }
+
+      // 2. Selection Sort
+      async function selectionSort() {
+        logMsg("\n--- Proses Selection Sort ---", "#3b82f6");
+        let n = array.length;
+        for (let i = 0; i < n; i++) {
+          let min_idx = i;
+          setBarColor(min_idx, "comparing");
+          await sleep(delay);
+
+          for (let j = i + 1; j < n; j++) {
+            setBarColor(j, "swapping"); // Warna saat mencari
+            await sleep(delay / 1.5);
+            if (array[j] < array[min_idx]) {
+              if (min_idx !== i) setBarColor(min_idx, "default");
+              min_idx = j;
+              setBarColor(min_idx, "comparing");
+            } else {
+              setBarColor(j, "default");
+            }
+          }
+          if (min_idx !== i) {
+            let temp = array[i];
+            array[i] = array[min_idx];
+            array[min_idx] = temp;
+            renderBars();
+            setBarColor(i, "swapping");
+            setBarColor(min_idx, "comparing");
+            await sleep(delay);
+          }
+          logMsg(`Iterasi ${i + 1}: ${array.join(" ")}`);
+          for (let k = 0; k <= i; k++) setBarColor(k, "sorted");
+        }
+        logMsg(`Data hasil sorting: ${array.join(" ")}`, "#10b981");
+        setStatus("Selection Sort Selesai!");
+      }
+
+      // 3. Insertion Sort
+      async function insertionSort() {
+        logMsg("\n--- Proses Insertion Sort ---", "#3b82f6");
+        let n = array.length;
+        setBarColor(0, "sorted");
+        for (let i = 1; i < n; i++) {
+          let key = array[i];
+          let j = i - 1;
+          setBarColor(i, "comparing");
+          await sleep(delay);
+
+          while (j >= 0 && array[j] > key) {
+            setBarColor(j, "swapping");
+            setBarColor(j + 1, "swapping");
+            await sleep(delay);
+            array[j + 1] = array[j];
+            renderBars();
+            setBarColor(j, "comparing");
+            j = j - 1;
+            await sleep(delay);
+          }
+          array[j + 1] = key;
+          renderBars();
+          for (let k = 0; k <= i; k++) setBarColor(k, "sorted");
+          logMsg(`Iterasi ${i}: ${array.join(" ")}`);
+          await sleep(delay);
+        }
+        logMsg(`Data hasil sorting: ${array.join(" ")}`, "#10b981");
+        setStatus("Insertion Sort Selesai!");
+      }
+
+      // 4. Quick Sort
+      async function quickSort() {
+        logMsg("\n--- Proses Quick Sort ---", "#3b82f6");
+        let step = { count: 1 };
+
+        async function partition(low, high) {
+          let pivot = array[high];
+          setBarColor(high, "pivot"); // Pivot purple
+          let i = low - 1;
+          for (let j = low; j <= high - 1; j++) {
+            setBarColor(j, "comparing");
+            await sleep(delay / 2);
+            if (array[j] < pivot) {
+              i++;
+              let temp = array[i];
+              array[i] = array[j];
+              array[j] = temp;
+              renderBars();
+              setBarColor(high, "pivot");
+              setBarColor(i, "swapping");
+              setBarColor(j, "swapping");
+              await sleep(delay);
+              setBarColor(i, "comparing");
+              setBarColor(j, "comparing");
+              await sleep(delay / 2);
+            }
+            setBarColor(j, "comparing");
+            await sleep(delay / 2);
+            setBarColor(j, "default");
+          }
+          let temp = array[i + 1];
+          array[i + 1] = array[high];
+          array[high] = temp;
+          renderBars();
+          setBarColor(high, "swapping");
+          setBarColor(i + 1, "swapping");
+          await sleep(delay);
+
+          // Reset warna setelah partisi
+          for (let k = low; k <= high; k++) {
+            setBarColor(k, "default");
+          }
+          logMsg(
+            `Iterasi Partisi ke-${step.count++} (pivot ${pivot}): ${array.join(" ")}`,
+          );
+          return i + 1;
+        }
+
+        async function qs(low, high) {
+          if (low < high) {
+            let pi = await partition(low, high);
+            setBarColor(pi, "sorted"); // Pi hijau setelah fix
+            await qs(low, pi - 1);
+            await qs(pi + 1, high);
+          } else if (low >= 0 && low < array.length) {
+            setBarColor(low, "sorted");
+          }
+        }
+
+        await qs(0, array.length - 1);
+        // Pastikan semua hijau di akhir
+        for (let i = 0; i < array.length; i++) setBarColor(i, "sorted");
+        logMsg(`Data hasil sorting: ${array.join(" ")}`, "#10b981");
+        setStatus("Quick Sort Selesai!");
+      }
+
+      // 5. Merge Sort
+      async function mergeSort() {
+        logMsg("\n--- Proses Merge Sort ---", "#3b82f6");
+        let step = { count: 1 };
+
+        async function merge(l, m, r) {
+          let n1 = m - l + 1,
+            n2 = r - m;
+          let L = array.slice(l, m + 1),
+            R = array.slice(m + 1, r + 1);
+
+          let i = 0,
+            j = 0,
+            k = l;
+          while (i < n1 && j < n2) {
+            setBarColor(k, "comparing");
+            await sleep(delay / 2);
+            if (L[i] <= R[j]) {
+              array[k] = L[i];
+              i++;
+            } else {
+              setBarColor(k, "swapping");
+              await sleep(delay / 2);
+              array[k] = R[j];
+              j++;
+            }
+            renderBars();
+            // Jaga highlight selama merge berlangsung
+            for (let x = l; x <= k; x++) setBarColor(x, "sorted");
+            k++;
+          }
+          while (i < n1) {
+            setBarColor(k, "comparing");
+            await sleep(delay / 2);
+            array[k] = L[i];
+            renderBars();
+            setBarColor(k, "sorted");
+            i++;
+            k++;
+          }
+          while (j < n2) {
+            setBarColor(k, "comparing");
+            await sleep(delay / 2);
+            array[k] = R[j];
+            renderBars();
+            setBarColor(k, "sorted");
+            j++;
+            k++;
+          }
+          await sleep(delay);
+        }
+
+        async function ms(l, r) {
+          if (l < r) {
+            let m = l + Math.floor((r - l) / 2);
+            await ms(l, m);
+            await ms(m + 1, r);
+            await merge(l, m, r);
+            logMsg(`Iterasi Merge ke-${step.count++}: ${array.join(" ")}`);
+          }
+        }
+
+        await ms(0, array.length - 1);
+        // Pastikan semua hijau di akhir
+        for (let i = 0; i < array.length; i++) setBarColor(i, "sorted");
+        logMsg(`Data hasil sorting: ${array.join(" ")}`, "#10b981");
+        setStatus("Merge Sort Selesai!");
+      }
+
+      // Pengendali Eksekusi
+      async function startSort(type) {
+        if (array.length === 0) {
+          logMsg(
+            "> Error: Silakan set data atau generate data terlebih dahulu!",
+            "#ef4444",
+          );
+          return;
+        }
+        if (isSorting) return;
+        toggleButtons(true);
+
+        // Reset warna bar ke default
+        array = [...originalArray];
+        renderBars();
+        setStatus(`Mulai ${type.toUpperCase()} Sorting...`);
+
+        if (type === "bubble") await bubbleSort();
+        else if (type === "selection") await selectionSort();
+        else if (type === "insertion") await insertionSort();
+        else if (type === "quick") await quickSort();
+        else if (type === "merge") await mergeSort();
+
+        toggleButtons(false);
+      }
+
+      // Inisialisasi awal
+      generateRandomArray();
+    </script>
+  </body>
+</html>
